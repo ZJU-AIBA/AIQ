@@ -1,0 +1,2 @@
+# AIQ
+IQ of AI
