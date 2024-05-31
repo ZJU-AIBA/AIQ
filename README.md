@@ -4,10 +4,10 @@ IQ of AI
 
 ## 代码结构
 
-capture_screen.py 截屏获取IQ题目
-test_iq.py 测试智商的脚本
-data/ 测试题文件
-result/ 测试结果
+- capture_screen.py 截屏获取IQ题目
+- test_iq.py 测试智商的脚本
+- data/ 测试题文件
+- result/ 测试结果
 
 ## 测试结果
 
