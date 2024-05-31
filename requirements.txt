@@ -1,0 +1,3 @@
+agit
+python-snippets
+dashscope
