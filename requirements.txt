@@ -1,3 +1,4 @@
 agit
 python-snippets
 dashscope
+pillow

@@ -155,10 +155,61 @@ def test_with_qwen(model, base64_str):
         content = response.message  # The error message.
     return dict(content=content, messages=messages)
 
+def test_with_customize_openai(model_name, base64_str, base_url, api_key):
+    """
+        openai client without system role
+    """
+    API_BASE = base_url
 
-def test_with_gpt(model, base64_str):
     from openai import OpenAI
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])  # 填写您自己的APIKey
+    client = OpenAI(base_url=API_BASE, api_key=api_key)  # 填写您自己的APIKey
+    _prompt = _system + "\n" + prompt
+
+    image = f"data:image/jpeg;base64,{base64_str}"
+
+    messages = [
+        {
+
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": _prompt
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": image
+                    }
+                }
+            ]
+        },
+    ]
+
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=messages,
+        temperature=0.,
+        top_p=1.
+    )
+    content = response.choices[0].message.content
+    print(content)
+    return dict(content=content, messages=messages)
+
+
+
+def test_with_gpt(model, base64_str, base_url = "", api_key = ""):
+    """ standard openai client. """
+    from openai import OpenAI
+    client = None
+    if len(api_key) == 0:
+        api_key = os.environ["OPENAI_API_KEY"]
+
+    if len(base_url) == 0:
+        client = OpenAI(api_key=api_key)  # 填写您自己的APIKey
+    else:
+        client = OpenAI(api_key=api_key, base_url=base_url)  # 填写您自己的APIKey
+
     messages = [
         {"role": "system", "content": _system},
         {
@@ -191,12 +242,22 @@ def test_with_gpt(model, base64_str):
     return dict(content=content, messages=messages)
 
 
+def test_with_step(model, base64_str):
+    return test_with_gpt(model, base64_str, base_url="https://api.stepfun.com/v1", api_key=os.environ["STEP_API_KEY"])
+
+def test_with_yi(model, base64_str):
+    API_BASE = "https://api.stepfun.com/v1"
+    return test_with_customize_openai("step-1-8k", base64_str, API_BASE, api_key=os.environ["YI_API_KEY"])
+
+
 model_map = {
     "glm-4v": test_with_glm,
     "gpt-4-turbo": test_with_gpt,
     "gpt-4o": test_with_gpt,
     "qwen-vl-plus": test_with_qwen,
-    "qwen-vl-max": test_with_qwen
+    "qwen-vl-max": test_with_qwen,
+    "yi-vision": test_with_yi,
+    "step-1v-8k" : test_with_step,
 }
 
 
@@ -222,14 +283,12 @@ def test_model(item, model):
 
 
 if __name__ == "__main__":
-    # data = load("data/test.jsonl")
-    data = load("data/result_1717065081.2147741.jsonl")
+    data = load("data/test.jsonl")
+    #data = load("data/result_1717065081.2147741.jsonl")
     data = data[:]
     # old_result = load("data/result_old.jsonl")
-    models = ["glm-4v", "gpt-4o", "qwen-vl-max"]
+    models = ["glm-4v", "gpt-4o", "qwen-vl-max", "yi-vision", "step-1v-8k"]
     # old_map = {item["image"]: item for item in old_result}
-
-    # models = ["qwen-vl-max"]
 
     try_times = 3
     result = []
@@ -261,7 +320,7 @@ if __name__ == "__main__":
                 print(f"\n{'*'*50}\n")
             result.append(rs_item)
         except Exception as e:
-            print(e)
+            print(e.with_traceback())
 
     dist_path = f"data/result_{int(time.time())}.jsonl"
     print(f"dumping to {dist_path}")
